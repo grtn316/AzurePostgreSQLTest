@@ -27,7 +27,7 @@ terraform apply -input=false -auto-approve -parallelism=10
 
 To configure parallelism in ARM, you must set this at the resouce level within a copy command. See `batchSize` below:
 
-```ARM
+```json
 {
       "copy": {
         "name": "postgreDatabase",
