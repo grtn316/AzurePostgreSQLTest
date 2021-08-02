@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.63.48766",
-      "templateHash": "15034925973628401391"
+      "templateHash": "9625757746961386209"
     }
   },
   "parameters": {
@@ -17,14 +17,19 @@
   "functions": [],
   "variables": {
     "serverName": "postgresqlserver",
-    "uniqueServerName": "[format('{0}-', variables('serverName'))]",
-    "databaseCount": 200
+    "serverCount": 100
   },
   "resources": [
     {
+      "copy": {
+        "name": "postgreSQLServer",
+        "count": "[length(range(0, variables('serverCount')))]",
+        "mode": "serial",
+        "batchSize": 20
+      },
       "type": "Microsoft.DBForPostgreSQL/servers",
       "apiVersion": "2017-12-01",
-      "name": "[uniqueString(variables('uniqueServerName'))]",
+      "name": "[format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[copyIndex()])]",
       "identity": {
         "type": "SystemAssigned"
       },
@@ -50,33 +55,83 @@
       "location": "[parameters('location')]"
     },
     {
+      "copy": {
+        "name": "postgreSQLServerFirewallRules1",
+        "count": "[length(range(0, variables('serverCount')))]"
+      },
       "type": "Microsoft.DBForPostgreSQL/servers/firewallRules",
       "apiVersion": "2017-12-01",
-      "name": "[format('{0}/ClientIP', uniqueString(variables('uniqueServerName')))]",
+      "name": "[format('{0}/{1}', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]), 'PublicIP')]",
       "properties": {
         "startIpAddress": "40.112.0.0",
         "endIpAddress": "40.112.255.255"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DBForPostgreSQL/servers', uniqueString(variables('uniqueServerName')))]"
+        "[resourceId('Microsoft.DBForPostgreSQL/servers', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]))]"
       ]
     },
     {
       "copy": {
-        "name": "postgreDatabase",
-        "count": "[length(range(0, variables('databaseCount')))]",
-        "mode": "serial",
-        "batchSize": 20
+        "name": "postgreSQLServerFirewallRules2",
+        "count": "[length(range(0, variables('serverCount')))]"
+      },
+      "type": "Microsoft.DBForPostgreSQL/servers/firewallRules",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]), 'PrivateIP')]",
+      "properties": {
+        "startIpAddress": "10.0.0.4",
+        "endIpAddress": "10.0.0.100"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBForPostgreSQL/servers', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "postgreDatabase1",
+        "count": "[length(range(0, variables('serverCount')))]"
       },
       "type": "Microsoft.DBForPostgreSQL/servers/databases",
       "apiVersion": "2017-12-01",
-      "name": "[format('{0}/database-{1}', uniqueString(variables('uniqueServerName')), range(0, variables('databaseCount'))[copyIndex()])]",
+      "name": "[format('{0}/{1}', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]), 'database1')]",
       "properties": {
         "charset": "UTF8",
         "collation": "English_United States.1252"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DBForPostgreSQL/servers', uniqueString(variables('uniqueServerName')))]"
+        "[resourceId('Microsoft.DBForPostgreSQL/servers', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "postgreDatabase2",
+        "count": "[length(range(0, variables('serverCount')))]"
+      },
+      "type": "Microsoft.DBForPostgreSQL/servers/databases",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]), 'database2')]",
+      "properties": {
+        "charset": "UTF8",
+        "collation": "English_United States.1252"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBForPostgreSQL/servers', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "postgreDatabase3",
+        "count": "[length(range(0, variables('serverCount')))]"
+      },
+      "type": "Microsoft.DBForPostgreSQL/servers/databases",
+      "apiVersion": "2017-12-01",
+      "name": "[format('{0}/{1}', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]), 'database3')]",
+      "properties": {
+        "charset": "UTF8",
+        "collation": "English_United States.1252"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBForPostgreSQL/servers', format('{0}-abc-{1}', variables('serverName'), range(0, variables('serverCount'))[range(0, variables('serverCount'))[copyIndex()]]))]"
       ]
     }
   ]

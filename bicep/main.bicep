@@ -4,11 +4,14 @@
 param location string = resourceGroup().location
 
 var serverName = 'postgresqlserver'
-var uniqueServerName = '${serverName}-'
-var databaseCount = 200
+//var uniqueServerName = '${serverName}-'
+var serverCount = 100
+//var databaseCount = 200
 
-resource postgreSQLServer 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
-  name: uniqueString(uniqueServerName)
+@batchSize(20)
+resource postgreSQLServer 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = [for x in range(0, serverCount): {
+  //name: uniqueString(uniqueServerName)
+  name: '${serverName}-abc-${x}'
   identity: {
     type: 'SystemAssigned'
   }
@@ -32,19 +35,49 @@ resource postgreSQLServer 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
     administratorLoginPassword: 'H@Sh1CoR3!'
   }
   location: location
-}
+}]
 
-resource postgreSQLServerFirewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = {
-  name: '${postgreSQLServer.name}/ClientIP'
+
+resource postgreSQLServerFirewallRules1 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for x in range(0, serverCount): {
+  parent: postgreSQLServer[x]
+  name: 'PublicIP'
   properties: {
     startIpAddress: '40.112.0.0'
     endIpAddress: '40.112.255.255'
   }
-}
+}]
 
-@batchSize(20)
-resource postgreDatabase 'Microsoft.DBforPostgreSQL/servers/databases@2017-12-01' = [for x in range(0, databaseCount): {
-  name: '${postgreSQLServer.name}/database-${x}'
+resource postgreSQLServerFirewallRules2 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for x in range(0, serverCount): {
+  parent: postgreSQLServer[x]
+  name: 'PrivateIP'
+  properties: {
+    startIpAddress: '10.0.0.4'
+    endIpAddress: '10.0.0.100'
+  }
+}]
+
+
+resource postgreDatabase1 'Microsoft.DBforPostgreSQL/servers/databases@2017-12-01' = [for x in range(0, serverCount): {
+  parent: postgreSQLServer[x]
+  name: 'database1'
+  properties: {
+    charset: 'UTF8'
+    collation: 'English_United States.1252'
+  }
+}]
+
+resource postgreDatabase2 'Microsoft.DBforPostgreSQL/servers/databases@2017-12-01' = [for x in range(0, serverCount): {
+  parent: postgreSQLServer[x]
+  name: 'database2'
+  properties: {
+    charset: 'UTF8'
+    collation: 'English_United States.1252'
+  }
+}]
+
+resource postgreDatabase3 'Microsoft.DBforPostgreSQL/servers/databases@2017-12-01' = [for x in range(0, serverCount): {
+  parent: postgreSQLServer[x]
+  name: 'database3'
   properties: {
     charset: 'UTF8'
     collation: 'English_United States.1252'
